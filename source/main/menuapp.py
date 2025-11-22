@@ -20,8 +20,6 @@ app = Flask(__name__)
 
 app.jinja_env.globals['getattr'] = getattr
 
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
-
 load_dotenv() 
 
 #ログイン管理システム
@@ -29,7 +27,20 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 db = SQLAlchemy()
-SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+if app.debug:
+    app.config["SECRET_KEY"] = os.urandom(24)
+    DB_INFO = {
+        'user':'postgres',
+        'password':'',
+        'host':'localhost',
+        'name':'menuapp_db',
+    }
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg://{user}:{password}@{host}/{name}'.format(**DB_INFO)
+else:
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL").replace('postgresql://','postgresql+psycopg://')
+
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 db.init_app(app)
 

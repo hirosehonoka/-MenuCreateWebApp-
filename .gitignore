@@ -16,3 +16,12 @@ Clp/
 CoinUtils/
 build/
 Osi/
+*.pyc
+*.log
+*.sqlite3
+.idea/
+.vscode/
+node_modules/
+dist/
+document/
+empty-folder/

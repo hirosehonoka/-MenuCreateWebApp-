@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}ログイン{% endblock %}
+{% block content %}
+
+<div class="text-center my-5">
+    <h2>ログイン</h2>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <p class="flash-message alert alert-danger" role="alert">{{ message }}</p>
+        {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 50vh;">
+    <form method="POST" style="width: 600px;">
+        <div class="mb-3">
+            <label for='userName' class="form-label">ユーザ名</label>
+            <input type="text" class="form-control w-100" name="userName" id="userName"><br>
+        </div>
+        <div class="mb-3">
+             <br><label for="password" class="form-label">パスワード</label>
+            <input type="password" class="form-control w-100" name="password" id="password"><br>
+        </div>
+        <div class="text-center mt-5">
+            <button type="submit" class="btn btn-primary btn-lg w-50">ログイン</button>
+        </div>
+    </form>
+</div>
+
+<!-- <div class="container d-flex justify-content-center align-items-center vh-100">
+     <form method="POST">
+        <div class="mb-3">
+            <label for='userName' class="form-label">ユーザ名</label>
+            <input type="text" class="form-control w-50" name="userName" id="userName"><br>
+        </div>
+        <div class="mb-3">
+             <br><label for="password" class="form-label">パスワード</label>
+            <input type="password" class="form-control w-50" name="password" id="password"><br>
+        </div>
+        <div class="text-center my-5">
+            <button type="submit" class="btn btn-primary btn-lg w-25">ログイン</button>
+        </div>
+    </form>
+</div> -->
+{% endblock %}

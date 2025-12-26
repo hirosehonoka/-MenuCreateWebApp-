@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}栄養素一覧{% endblock %}
+{% block content %}
+
+{% set nutrients_order = [
+    "カロリー(kcal)",
+    "たんぱく質(g)",
+    "脂質(g)",
+    "炭水化物(g)",
+    "食物繊維(g)",
+    "カルシウム(mg)",
+    "鉄(mg)",
+    "ビタミンA(μg)",
+    "ビタミンD(μg)",
+    "ビタミンB₁(mg)",
+    "ビタミンB₂(mg)",
+    "ビタミンC(mg)",
+    "食塩(g)"
+] %}
+<div class="container my-5">
+  <div class="text-center mb-4">
+    <h2>栄養素目標範囲と合計摂取量</h2>
+  </div>
+  <table class="table table-bordered" style="max-width: 900px; margin: auto;">
+    <thead>
+      <tr>
+        <th class="text-center" style="width:300px;">栄養素</th>
+        <th class="text-center" style="width:300px;">目標範囲</th>
+        <th class="text-center" style="width:300px;">合計摂取量</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name in nutrients_order %}
+        <tr>
+          <th scope="row" class="text-center">{{ name }}</th>
+          <td class="text-center">
+            {% if nutritionals[name] is defined %}
+              {% set v = nutritionals[name] %}
+              {% if v.min is defined and v.max is defined %}
+                {{ v.min }} ~ {{ v.max }}
+              {% elif v.min is defined %}
+                {{ v.min }} ~
+              {% elif v.max is defined %}
+                ~ {{ v.max }}
+              {% else %}
+                -
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if nutrition[name] is defined %}
+              {{ nutrition[name] }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      {# 順番リスト外の項目を追加で表示する場合 #}
+      {% for name, val in nutrition.items() %}
+        {% if name not in nutrients_order %}
+        <tr>
+          <th scope="row">{{ name }}</th>
+          <td class="text-center">
+            {% if nutritionals[name] is defined %}
+              {% set v = nutritionals[name] %}
+              {% if v.min is defined and v.max is defined %}
+                {{ v.min }} ~ {{ v.max }}
+              {% elif v.min is defined %}
+                {{ v.min }} ~
+              {% elif v.max is defined %}
+                ~ {{ v.max }}
+              {% else %}
+                -
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td class="text-center">{{ val }}</td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

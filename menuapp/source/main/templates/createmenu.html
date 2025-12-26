@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}献立作成{% endblock %}
+{% block content %}
+
+<div class="text-center mt-5 mb-3">
+    <h2>家にある食材の登録</h2>
+    <p>※表記揺れ防止のため検索したのち候補から当てはまる食材名を選択してください</p>
+    <p>※量(g)の項目には半角数字のみ入力してください</p><br>
+</div>
+<!-- 候補リストを作成 -->
+<datalist id="item-list">
+  <option value="卵">
+  <option value="米">
+  <option value="鯖">
+  <option value="ご飯">
+  <option value="なす">
+  <option value="イカ">
+  <option value="カブ">
+  <option value="ニラ">
+  <option value="出汁">
+  <option value="大根">
+  <option value="岩塩">
+  <option value="春雨">
+  <option value="水菜">
+  <option value="海苔">
+  <option value="牛乳">
+  <option value="牛肉">
+  <option value="生姜">
+  <option value="白菜">
+  <option value="舞茸">
+  <option value="蓮根">
+  <option value="豆乳">
+  <option value="里芋">
+  <option value="えのき">
+  <option value="ごぼう">
+  <option value="しじみ">
+  <option value="もやし">
+  <option value="ゆで卵">
+  <option value="イワシ">
+  <option value="セロリ">
+  <option value="ツナ缶">
+  <option value="トマト">
+  <option value="ポン酢">
+  <option value="レタス">
+  <option value="三温糖">
+  <option value="小ネギ">
+  <option value="小松菜">
+  <option value="強力粉">
+  <option value="手羽先">
+  <option value="梅干し">
+  <option value="油揚げ">
+  <option value="玉ねぎ">
+  <option value="豚バラ">
+  <option value="赤味噌">
+  <option value="長ネギ">
+  <option value="青ネギ">
+  <option value="いんげん">
+  <option value="かぼちゃ">
+  <option value="きび砂糖">
+  <option value="きゅうり">
+  <option value="しいたけ">
+  <option value="しらたき">
+  <option value="たけのこ">
+  <option value="にんじん">
+  <option value="はちみつ">
+  <option value="むきえび">
+  <option value="エリンギ">
+  <option value="カニカマ">
+  <option value="カレー粉">
+  <option value="キャベツ">
+  <option value="ナツメグ">
+  <option value="ニンニク">
+  <option value="ピーマン">
+  <option value="ベーコン">
+  <option value="レモン汁">
+  <option value="中華あじ">
+  <option value="乾燥大豆">
+  <option value="冷凍塩鮭">
+  <option value="木綿豆腐">
+  <option value="牛ひき肉">
+  <option value="牛バラ肉">
+  <option value="生おから">
+  <option value="白ワイン">
+  <option value="粉チーズ">
+  <option value="豚ひき肉">
+  <option value="豚ヒレ肉">
+  <option value="高野豆腐">
+  <option value="鮭水煮缶">
+  <option value="鯖缶水煮">
+  <option value="鶏むね肉">
+  <option value="鶏もも肉">
+  <option value="鶏手羽元">
+  <option value="うどんゆで">
+  <option value="きりたんぽ">
+  <option value="こんにゃく">
+  <option value="さつまいも">
+  <option value="じゃがいも">
+  <option value="ねりわさび">
+  <option value="ぶなしめじ">
+  <option value="ぶり切り身">
+  <option value="ほうれん草">
+  <option value="ウインナー">
+  <option value="カレールー">
+  <option value="スパゲティ">
+  <option value="乾燥ひじき">
+  <option value="乾燥バジル">
+  <option value="焼きちくわ">
+  <option value="牛薄切り肉">
+  <option value="生クリーム">
+  <option value="白いりごま">
+  <option value="白すりごま">
+  <option value="絹ごし豆腐">
+  <option value="豚肩ロース">
+  <option value="鮭の切り身">
+  <option value="いわし丸干し">
+  <option value="アジの切り身">
+  <option value="カツオ刺身用">
+  <option value="サニーレタス">
+  <option value="サバ缶煮付け">
+  <option value="ブロッコリー">
+  <option value="ホールトマト">
+  <option value="乾燥きくらげ">
+  <option value="切り干し大根">
+  <option value="焼き肉のたれ">
+  <option value="糸こんにゃく">
+  <option value="豚こま切れ肉">
+  <option value="鯖半身 切り身">
+  <option value="とろけるチーズ">
+  <option value="カットトマト缶">
+  <option value="シュウマイの皮">
+  <option value="冷凍パイシート">
+  <option value="無糖ヨーグルト">
+  <option value="牛の切り落とし">
+  <option value="市販ミートソース">
+  <option value="粗挽き黒こしょう">
+  <option value="ハヤシライスのルー">
+  <option value="ベーキングパウダー">
+  <option value="鷄むね肉皮と脂をとったもの">
+</datalist>
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 50vh;">
+    <form id="required-items-form">
+        <div class="row mb-2">
+            <div class="col">
+                <label for="registitem" class="form-label">食材</label>
+                <input type="text" name="item" class="form-control" list="item-list">
+            </div>
+            <div class="col">
+                <label for="registweight" class="form-label">量(g)</label>
+                <input type="number" name="weight" class="form-control">
+            </div>
+        </div>
+        <!-- 記入行をJSで追加可 -->
+        <div id="ingredient-list">
+            <script>
+            function addRow() {
+            let container = document.createElement('div');
+            container.className = "row mb-2";
+            container.innerHTML =`
+                <div class="col">
+                <input type="text" name="item" class="form-control" list="item-list">
+                </div>
+                <div class="col">
+                <input type="number" name="weight" class="form-control">
+                </div>`;
+            document.getElementById('ingredient-list').appendChild(container);
+            }
+            // 初期表示用
+            addRow();
+            </script>
+        </div>
+        <button type="button" class="btn btn-link text-body-secondary" style="text-decoration:none;" onclick="addRow()">＋食材追加</button><br>
+        <div class="text-center mt-5">
+            <button type="button" onclick="sendForm()" class="btn btn-primary btn-lg w-50" id="createBtn">登録・献立作成</button>
+        </div>
+    </form>
+</div>
+<script>
+function sendForm() {
+    const btn = document.getElementById("createBtn");
+    btn.disabled = true;
+    btn.innerText = "作成中...";
+
+    let dict = {}; // フォームから食材と分量を取得
+
+    fetch('/createmenu', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(dict)
+    }).then(res => {
+        if(res.ok) {
+            checkMenuReady(); // 完了ポーリング開始
+        } else {
+            btn.disabled = false;
+            btn.innerText = "登録・献立作成";
+        }
+    });
+}
+
+function checkMenuReady() {
+    fetch("/menu_status")
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === "done") {
+            window.location.href = "/showmenu"; // 完了後に表示
+        } else {
+            setTimeout(checkMenuReady, 2000); // 2秒ごとに再チェック
+        }
+    });
+}
+</script>
+{% endblock %}

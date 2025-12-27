@@ -4,17 +4,11 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import  cast, BigInteger,literal,select,union_all,text
 from flask_login import UserMixin,LoginManager,login_user,login_required,logout_user,current_user
 from werkzeug.security import generate_password_hash,check_password_hash
-import os,json,re,logging,traceback,time
+import os,json,logging
 from collections import defaultdict
 from dotenv import load_dotenv
-from pyomo.environ import SolverFactory
-import pyomo.environ as pyo
-from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from pyomo.opt import TerminationCondition
-import pandas as pd
-import itertools
-from itertools import product
 from pyomo.util.infeasible import log_infeasible_constraints
 from pyomo.opt import TerminationCondition
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
@@ -50,6 +44,7 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
+#　データベース接続
 db = SQLAlchemy()
 
 if app.debug:
@@ -140,6 +135,7 @@ def should_use_pfc(userInfo):
         return False  # PFC制約を外す
     return True
 
+#　PFCの目標をグラム単位に換算する
 def percent_to_g(percent, energy, factor):
     """%エネルギー→g換算"""
     try:
@@ -225,11 +221,66 @@ class UserWrapper(UserMixin):
     def is_anonymous(self):
         return False
     
-    
+#　ホーム画面表示   
 @app.route("/")
 def home():
     return render_template("home.html", show_navbar=False)
+
+#　サインアップ機能
+@app.route("/signup",methods=['GET','POST'])
+def signup():
+    if request.method == 'POST':
+        userName = request.form.get('userName')
+        password = request.form.get('password')
+
+        # 空欄チェック
+        if not userName or not password:
+            flash("ユーザー名とパスワードを入力してください")
+            return redirect(url_for("signup"))
+
+        # すでに存在するかチェック
+        existing_user = db.session.query(User).filter_by(userName=userName).first()
+        if existing_user:
+            flash("このユーザー名はすでに使われています")
+            return redirect(url_for("signup"))
     
+        hashed_pass = generate_password_hash(password)
+        userAge = request.form.get('userAge')
+        userGender = request.form.get('userGender')
+        userExerciseLevel = request.form.get('userExerciseLevel')
+        menstruation = request.form.get('menstruation')
+        userInfo ={"年齢":userAge,"性別":userGender,"運動レベル":userExerciseLevel}
+        user = User(userName=userName,password=hashed_pass,userInfo=userInfo,menstruation=menstruation)
+        db.session.add(user)
+        db.session.commit()
+        return redirect('/login')
+    elif request.method == 'GET':
+        return render_template('signup.html', show_navbar=False)
+    
+#　ログイン機能
+@app.route('/login',methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        userName = request.form.get('userName')
+        password = request.form.get('password')
+        user = db.session.query(User).filter_by(userName=userName).first()
+        
+        # ユーザーが存在しない場合
+        if user is None:
+            flash("ユーザー名が間違っています")
+            return redirect(url_for("login"))
+        
+        if check_password_hash(user.password,password=password):
+            wrapped_user = UserWrapper(user)
+            login_user(wrapped_user)
+            return redirect('/showmenu')
+        else:
+            flash('ユーザ名かパスワードが違います')
+            return redirect(url_for('login'))
+    elif request.method == 'GET':
+        return render_template('login.html', show_navbar=False)
+
+#　献立一覧表示機能
 @app.route("/showmenu")
 @login_required
 def show_menus():
@@ -303,7 +354,48 @@ def show_menus():
 
 
     return render_template("showmenu.html", weekly_data=weekly_data, menu_created_date=menu_created_date, current_page='showmenu', show_navbar=True)
-   
+
+#　ユーザ情報の更新機能
+@app.route("/userupdate", methods=['GET', 'POST'])
+@login_required
+def user_update():
+    user = db.session.query(User).filter_by(userId=int(current_user.get_id())).first()
+
+    if request.method == 'POST':
+        userAge = request.form.get('userAge')
+        userExerciseLevel = request.form.get('userExerciseLevel')
+        menstruation = request.form.get('menstruation', 'なし')
+
+        if user and user.userInfo:
+            # userInfoは辞書と仮定
+            info = dict(user.userInfo)
+            info['年齢'] = userAge
+            info['運動レベル'] = userExerciseLevel
+            user.userInfo = info
+
+            # menstruation カラムに代入
+            user.menstruation = menstruation
+
+            db.session.commit()
+        return redirect('/showmenu')
+
+    else:  # GET
+        userGender_selected = user.userInfo.get('性別') if user and user.userInfo else None
+        userAge_selected = user.userInfo.get('年齢') if user and user.userInfo else None
+        userExerciseLevel_selected = user.userInfo.get('運動レベル') if user and user.userInfo else None
+        menstruation_selected = user.menstruation if user else 'なし'
+
+        return render_template(
+            'userupdate.html',
+            userGender_selected=userGender_selected,
+            userAge_selected=userAge_selected,
+            userExerciseLevel_selected=userExerciseLevel_selected,
+            menstruation_selected=menstruation_selected,
+            current_page='userupdate',
+            show_navbar=True
+        )
+
+#　食材一覧表示機能
 @app.route("/item")
 @login_required
 def show_item():
@@ -354,11 +446,13 @@ def show_item():
 
     return render_template('item.html', ingredients=aggregated_ingredients, total_types=total_types, current_page='item', show_navbar=True)
 
+#　食材登録機能
 @app.route('/registitem', methods=['GET'])
 @login_required
 def regist_item():
     return render_template('createmenu.html',current_page='createmenu',show_navbar=True)
 
+#　献立作成機能・献立作成画面で参照
 @app.route("/menu_status")
 @login_required
 def menu_status():
@@ -368,7 +462,7 @@ def menu_status():
     else:
         return {"status": "pending"}
 
-# 非同期化
+# 献立作成機能・非同期ジョブワーカーへ
 @app.route('/createmenu', methods=['GET','POST'])
 @login_required
 def create_menu_async():
@@ -401,6 +495,7 @@ def create_menu_async():
         logging.error(f"Failed to queue job: {e}")
         return {"status": "error", "message": "ジョブ登録に失敗しました"}, 500
 
+#　栄養一覧表示機能
 @app.route("/nutrition")
 @login_required
 def show_nutrition():
@@ -508,98 +603,7 @@ def show_nutrition():
 
     return render_template("nutrition.html", nutrition=rounded_nutrition, nutritionals=nutritionals, current_page='nutrition', show_navbar=True)
 
-
-@app.route("/signup",methods=['GET','POST'])
-def signup():
-    if request.method == 'POST':
-        userName = request.form.get('userName')
-        password = request.form.get('password')
-
-        # 空欄チェック
-        if not userName or not password:
-            flash("ユーザー名とパスワードを入力してください")
-            return redirect(url_for("signup"))
-
-        # すでに存在するかチェック
-        existing_user = db.session.query(User).filter_by(userName=userName).first()
-        if existing_user:
-            flash("このユーザー名はすでに使われています")
-            return redirect(url_for("signup"))
-    
-        hashed_pass = generate_password_hash(password)
-        userAge = request.form.get('userAge')
-        userGender = request.form.get('userGender')
-        userExerciseLevel = request.form.get('userExerciseLevel')
-        menstruation = request.form.get('menstruation')
-        userInfo ={"年齢":userAge,"性別":userGender,"運動レベル":userExerciseLevel}
-        user = User(userName=userName,password=hashed_pass,userInfo=userInfo,menstruation=menstruation)
-        db.session.add(user)
-        db.session.commit()
-        return redirect('/login')
-    elif request.method == 'GET':
-        return render_template('signup.html', show_navbar=False)
-    
-@app.route("/userupdate", methods=['GET', 'POST'])
-@login_required
-def user_update():
-    user = db.session.query(User).filter_by(userId=int(current_user.get_id())).first()
-
-    if request.method == 'POST':
-        userAge = request.form.get('userAge')
-        userExerciseLevel = request.form.get('userExerciseLevel')
-        menstruation = request.form.get('menstruation', 'なし')
-
-        if user and user.userInfo:
-            # userInfoは辞書と仮定
-            info = dict(user.userInfo)
-            info['年齢'] = userAge
-            info['運動レベル'] = userExerciseLevel
-            user.userInfo = info
-
-            # menstruation カラムに代入
-            user.menstruation = menstruation
-
-            db.session.commit()
-        return redirect('/showmenu')
-
-    else:  # GET
-        userGender_selected = user.userInfo.get('性別') if user and user.userInfo else None
-        userAge_selected = user.userInfo.get('年齢') if user and user.userInfo else None
-        userExerciseLevel_selected = user.userInfo.get('運動レベル') if user and user.userInfo else None
-        menstruation_selected = user.menstruation if user else 'なし'
-
-        return render_template(
-            'userupdate.html',
-            userGender_selected=userGender_selected,
-            userAge_selected=userAge_selected,
-            userExerciseLevel_selected=userExerciseLevel_selected,
-            menstruation_selected=menstruation_selected,
-            current_page='userupdate',
-            show_navbar=True
-        )
-
-@app.route('/login',methods=['GET','POST'])
-def login():
-    if request.method == 'POST':
-        userName = request.form.get('userName')
-        password = request.form.get('password')
-        user = db.session.query(User).filter_by(userName=userName).first()
-        
-        # ユーザーが存在しない場合
-        if user is None:
-            flash("ユーザー名が間違っています")
-            return redirect(url_for("login"))
-        
-        if check_password_hash(user.password,password=password):
-            wrapped_user = UserWrapper(user)
-            login_user(wrapped_user)
-            return redirect('/showmenu')
-        else:
-            flash('ユーザ名かパスワードが違います')
-            return redirect(url_for('login'))
-    elif request.method == 'GET':
-        return render_template('login.html', show_navbar=False)
-    
+#　ログアウト機能 
 @app.route('/logout',methods=['GET','POST'])
 @login_required
 def logout():
